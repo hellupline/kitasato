@@ -5,7 +5,7 @@ from kitasato import tree, response
 NO_ENDPOINT_MSG = 'Endpoint not found.'
 
 
-class Application(response.RequestDispatcher, tree.Path):
+class Application(response.RequestDispatcher, tree.Tree):
     def __init__(self, name, items):
         super().__init__(name=name, items=items)
         self.url_map = routing.Map([self.get_url_rules()])
