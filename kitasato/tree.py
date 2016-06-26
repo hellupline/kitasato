@@ -7,7 +7,6 @@
     This module implements a simple tree-like structure to help create
     automated urls prefixes and endpoint prefixes.
 
-
     Example:
         >>> from kitasato import application, tree, resource
         >>> from werkzeug import serving, wrappers
@@ -29,9 +28,6 @@
         ...     ])
         >>> if __name__ == '__main__':
         ...     serving.run_simple('0.0.0.0', 5000, create_app())
-
-
-    :license: BSD, see LICENSE for more details.
 """
 from werkzeug import routing
 
@@ -205,6 +201,10 @@ class EndpointHandler(Tree):
         endpoint (str): Endpoint prefix for this node
         url (str): Url prefix for this node
         name (str): Human readable node name
+
+    Methods:
+        dispatch_request: Ovewrite this method to implement the response
+                          function
     """
     show_in_menu = False
 
