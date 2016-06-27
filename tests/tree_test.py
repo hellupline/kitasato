@@ -57,7 +57,7 @@ class TreeTest(unittest.TestCase):
 
     def test_get_url_rules_no_endpoint(self):
         items = [self._create_node(i) for i in range(2)]
-        root = tree.Tree(url='/root/', items=items)
+        root = tree.Tree(url='/level0/', items=items)
         rule = root.get_url_rules()
         self.assertEqual(rule.prefix, '')
         self.assertEqual(rule.rules[0].path, '/level0')
