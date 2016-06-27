@@ -15,13 +15,13 @@ class Application(response.RequestDispatcher, tree.Tree):
         adapter = self.url_map.bind_to_environ(request.environ)
         try:
             endpoint, values = adapter.match()
-            return self.respond_endpoint(request, endpoint, values)
+            return self.serve_endpoint(request, endpoint, values)
         except exceptions.NotFound as e:
             return e
-        except exceptions.HTTPException as e:
+        except exceptions.HTTPException as e:  # pragma: no cover
             return e
 
-    def respond_endpoint(self, request, endpoint, values):
+    def serve_endpoint(self, request, endpoint, values):
         try:
             handler = self.endpoint_map[endpoint]
         except KeyError:
