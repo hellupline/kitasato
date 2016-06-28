@@ -1,6 +1,7 @@
 import unittest
 
 from werkzeug import wrappers, exceptions, test as test_utils
+import jinja2
 
 from kitasato import response
 
@@ -11,31 +12,31 @@ class App(response.RequestDispatcher):
 
 
 class Render(response.RenderMixin):
+    template = jinja2.Template('{{ data }}')
+
     def context(self, resquest):
         return {'data': 'ok'}
-
-    def render_html(self, context):
-        return str(context['data'])
-
-    render_json = render_html
 
 
 class RequestDispacherTest(unittest.TestCase):
     def test_call(self):
         c = test_utils.Client(App())
-        c.get('/')
-        # XXX validate output
+        closing, status, headers = c.get('/')
+        self.assertEqual(list(closing), [b'ok'])
 
 
 class RenderMixinTest(unittest.TestCase):
     def test_select_render_html(self):
-        item = Render()
-        env = test_utils.EnvironBuilder(path='/')
-        item.dispatch_request(env.get_request(), render='json')
-        # XXX validate output
+        request = test_utils.EnvironBuilder(path='/').get_request()
+        response_html = Render().dispatch_request(request, render='html')
+        self.assertEqual(response_html.response, [b'ok'])
+
+    def test_select_render_json(self):
+        request = test_utils.EnvironBuilder(path='/').get_request()
+        response_json = Render().dispatch_request(request, render='json')
+        self.assertEqual(response_json.response, [b'"ok"'])
 
     def test_select_render_miss(self):
-        item = Render()
-        env = test_utils.EnvironBuilder(path='/')
+        request = test_utils.EnvironBuilder(path='/').get_request()
         with self.assertRaises(exceptions.NotFound):
-            item.dispatch_request(env.get_request(), render='fake')
+            Render().dispatch_request(request, render='fake')
