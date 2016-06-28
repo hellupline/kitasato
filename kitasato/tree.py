@@ -79,6 +79,7 @@ class Tree:
         Arguments:
             items (iterable[Tree]): Sequence of nodes
         """
+        items = list(items)
         for item in items:
             item.set_parent(self)
         self.items.extend(items)
