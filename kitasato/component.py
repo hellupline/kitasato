@@ -17,14 +17,7 @@ class Component(response.RenderMixin, tree.EndpointHandler):
 
     def make_context(self, request, external_ctx=None):
         url_for = self.get_root().get_url_for_func(request)  # noqa pylint: disable=no-member
-        return {
-            'request': request,
-            'url_for': url_for,
-            'endpoint': self.absolute_endpoint(),
-            'name': self.name,
-            'controller': self.controller,
-            **(external_ctx or {}),
-        }
+        return {'request': request, 'url_for': url_for, **(external_ctx or {})}
 
 
 class Index(Component):
@@ -34,20 +27,22 @@ class Index(Component):
     endpoint = 'index'
 
     def get(self, request):
-        args = dict(request.args)
-        reverse = self._pop_args(args, 'reverse', default=False)
-        reverse = bool(int(reverse))
-        order_by = self._pop_args(args, 'order_by')
-        page = self._pop_args(args, 'page', default=1)
-
+        page, order_by, reverse, filters = self._get_args(request)
         items, count = self.controller.get_items(
-            page=page, order_by=order_by, reverse=reverse,
-            filters=request.args,
+            page=page, order_by=order_by, reverse=reverse, filters=filters,
         )
         return {
             'pagination': {self._get_pagination(count, page)},
             'items': items, 'count': count,
         }
+
+    def _get_args(self, request):
+        args = dict(request.args)
+        reverse = self._pop_args(args, 'reverse', default=False)
+        reverse = bool(int(reverse))
+        order_by = self._pop_args(args, 'order_by')
+        page = self._pop_args(args, 'page', default=1)
+        return page, order_by, reverse, args
 
     def _pop_args(self, args, key, default=None):
         try:
