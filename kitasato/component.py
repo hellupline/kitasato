@@ -6,18 +6,17 @@ from kitasato import tree, response
 
 class Component(response.RenderMixin, tree.EndpointHandler):
     template = jinja2.Template(
-        'controller: {{ controller }}\n'
-        'name: {{ name }}\n'
-        'item: {{ item }}\n\n'
+        'request: {{ request }}\n'
+        'url_for: {{ url_for }}\n'
     )
 
     @property
     def controller(self):
         return self.parent
 
-    def make_context(self, request, external_ctx=None):
+    def make_context(self, request, body=None):
         url_for = self.get_root().get_url_for_func(request)  # noqa pylint: disable=no-member
-        return {'request': request, 'url_for': url_for, **(external_ctx or {})}
+        return {'request': request, 'url_for': url_for, **(body or {})}
 
 
 class Index(Component):
@@ -32,7 +31,7 @@ class Index(Component):
             page=page, order_by=order_by, reverse=reverse, filters=filters,
         )
         return {
-            'pagination': {self._get_pagination(count, page)},
+            'pagination': self._get_pagination(count, page),
             'items': items, 'count': count,
         }
 

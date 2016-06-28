@@ -53,8 +53,8 @@ class RenderMixin:
             message = 'Stream render "{}" not found.'.format(render)
             raise exceptions.NotFound(message)
 
-        context = method(request, *args, **kwargs)
-        context = self.make_render(request, external_ctx=context)
+        body = method(request, *args, **kwargs)
+        context = self.make_context(request, body=body)
         return wrappers.Response(render(context))
 
     @cached_property
