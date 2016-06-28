@@ -1,8 +1,18 @@
-from pprint import pformat
-
 from werkzeug import serving, wrappers
-
+import jinja2
 from kitasato import application, tree, resource
+
+template = jinja2.Template(
+    '''{% for name, value in data -%}
+========================================
+{{ name }}:
+----------------------------------------
+{{ value|pprint }}
+{% endfor -%}
+========================================
+
+'''
+)
 
 
 class RootDocument(tree.EndpointHandler):
@@ -12,11 +22,14 @@ class RootDocument(tree.EndpointHandler):
     show_in_menu = True
 
     def dispatch_request(self, request):
+        # pylint: disable=no-member
         root = self.get_root()
-        msg = '\n'.join([
-            pformat(root.endpoint_map),  # pylint: disable=no-member
-            pformat(root.url_map),  # pylint: disable=no-member
-            pformat(root.as_menu_tree()),
+        url_for = root.get_url_adapter(request).build
+        msg = template.render(data=[
+            ('endpoint_map', root.endpoint_map),
+            ('url_map', root.url_map),
+            ('as_menu_tree', root.as_menu_tree()),
+            ('url_for', ('r1:index', url_for('r1:index'))),
         ])
         return wrappers.Response(msg)
 
