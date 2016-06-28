@@ -31,6 +31,9 @@ class Application(response.RequestDispatcher, tree.Tree):
     def get_url_adapter(self, request):
         return self.url_map.bind_to_environ(request.environ)
 
+    def get_url_for_func(self, request):
+        return self.get_url_adapter(request).build
+
     def serve_endpoint(self, request, endpoint, values):
         try:
             handler = self.endpoint_map[endpoint]

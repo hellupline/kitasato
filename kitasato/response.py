@@ -15,20 +15,46 @@ class RequestDispatcher:
 
 
 class RenderMixin:
-    """A `dispatch_request` that renders from a `context` method."""
+    """This class implements a `dispatch_request` and output renders.
+
+    This `dispatch_request` will:
+        - select a method based `request.method`, if method is missing
+        raise MethodNotAllowed
+        - select a render from `render` arg (default 'html'), if render
+        is missing, raise NotFound
+        - get the return of the method and pass to `self.context`
+        - pass the return of the `self.context` to render
+        - return the result of render
+    """
+
+    allowed_methods = {'GET': 'get', 'POST': 'post'}
 
     def dispatch_request(self, request, *args, render='html', **kwargs):
-        """Renders the output of `context` using `render` and returns.
+        """Renders the output of `get` or `post`,
+        pass it to self.make_context
+        and render using `render` and returns.
+
+        Raises:
+            MethodNotAllowed: if method not in `self.allowed_methods` or
+                              if class method not exists
+            NotFound: if render not in `self.renders`
 
         Returns:
             (Response): A Response object containing the response to request.
         """
         try:
+            method = getattr(self, self.allowed_methods[request.method])
+        except (KeyError, AttributeError):
+            valid_methods = list(self.allowed_methods.keys())
+            raise exceptions.MethodNotAllowed(valid_methods)
+        try:
             render = self.renders[render]
         except KeyError:
-            msg = 'Stream render "{}" not found.'.format(render)
-            raise exceptions.NotFound(msg)
-        context = self.context(request, *args, **kwargs)
+            message = 'Stream render "{}" not found.'.format(render)
+            raise exceptions.NotFound(message)
+
+        context = method(request, *args, **kwargs)
+        context = self.make_render(request, external_ctx=context)
         return wrappers.Response(render(context))
 
     @cached_property
@@ -43,6 +69,3 @@ class RenderMixin:
 
     def render_json(self, context):
         return json.dumps(context['data'], indent=4)
-
-    def context(self, request):
-        raise NotImplementedError()
