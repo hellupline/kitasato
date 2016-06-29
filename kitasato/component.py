@@ -10,13 +10,17 @@ class Component(response.RenderMixin, tree.EndpointHandler):
         'url_for: {{ url_for }}\n'
     )
 
-    @property
-    def controller(self):
-        return self.parent
+    def __init__(self, controller, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.controller = controller
 
     def make_context(self, request, body=None):
-        url_for = self.get_root().get_url_for_func(request)  # noqa pylint: disable=no-member
-        return {'request': request, 'url_for': url_for, **(body or {})}
+        url_for = self.get_root().get_url_for(request)  # noqa pylint: disable=no-member
+        return {
+            'request': request,
+            'url_for': url_for,
+            **(body or {}),
+        }
 
 
 class Index(Component):

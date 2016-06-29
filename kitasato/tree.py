@@ -209,11 +209,6 @@ class EndpointHandler(Tree):
     """
     show_in_menu = False
 
-    def __init__(self, endpoint=None, url=None, name=None, show_in_menu=None):
-        super().__init__(
-            endpoint=endpoint, url=url, name=name, show_in_menu=show_in_menu,
-        )
-
     def get_url_rules(self):
         """Build a Rule for this node.
 

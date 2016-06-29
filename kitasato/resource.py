@@ -6,14 +6,53 @@
 
     This module implements a simple RPC interface to help create HTTP APIs.
 """
-from functools import reduce
 import operator as op
 
 from kitasato import tree, component
 
 
-def compose(*funcs):
-    return lambda x: reduce(lambda v, f: f(v), reversed(funcs), x)
+class Resource(tree.Tree):  # pylint: disable=abstract-method
+    """Simple RPC APIs may implements a CRUD interface.
+
+    This class is a :class:`kitasato.tree.Tree` with predetermined items:
+        - :class:`kitasato.component.Index`
+        - :class:`kitasato.component.Create`
+        - :class:`kitasato.component.Read`
+        - :class:`kitasato.component.Update`
+        - :class:`kitasato.component.Delete`
+
+    Arguments:
+        controller (Controller): a controller to access storage methods,
+                                 Controllers may use `ControllerMixin`
+                                 as a base
+        endpoint (str): Endpoint prefix for this node
+        url (str): Url prefix for this node
+        name (str): Human readable name
+        show_in_menu (bool): If node should be in menu_tree
+
+    Attributes:
+        components: contains the components that will be initiated,
+                    they `parent` will be this node, may be overwriten to
+                    change components
+        show_in_menu (bool): True if node should be in menu_tree, default True
+        endpoint (str): Endpoint prefix for this node
+        url (str): Url prefix for this node
+        name (str): Human readable node name
+    """
+
+    components = (
+        component.Index,
+        component.Create,
+        component.Read,
+        component.Update,
+        component.Delete,
+    )
+
+    def __init__(self, controller, *args, **kwargs):
+        super().__init__(*args, **kwargs, items=[
+            component(controller=controller)
+            for component in self.components
+        ])
 
 
 class ControllerMixin:
@@ -31,7 +70,7 @@ class ControllerMixin:
         Arguments:
             page (int): the page number
             filters (sequence): a sequence of 2-items tuple of
-                                (filter_key, value)
+                            (filter_key, value)
             order_by (str): the field to order items by
             reverse (bool): reverse the sort order,
                             only if order_by is not None
@@ -62,7 +101,7 @@ class ControllerMixin:
             filter_func(filter_value, items)
         return items
 
-    def sort_items(self, items, order_by=None, reverse=False):
+    def sort_items(self, items, order_by, reverse=False):
         """Sort items based on `order_by` key in items.
 
         Arguments:
@@ -73,8 +112,6 @@ class ControllerMixin:
         Returns:
             list: sorted items by `order_by`
         """
-        if order_by is None:
-            return sorted(items, reverse=reverse)
         return sorted(items, key=op.itemgetter(order_by), reverse=reverse)
 
     def slice_items(self, items, page=1):
@@ -87,6 +124,7 @@ class ControllerMixin:
         Returns:
             list: slice of items
         """
+
         start, end = self.per_page*(page-1), self.per_page*page
         return items[start:end]
 
@@ -112,44 +150,3 @@ class ControllerMixin:
 
     def delete_item(self, item):
         raise NotImplementedError
-
-
-class Resource(ControllerMixin, tree.Tree):  # pylint: disable=abstract-method
-    """Simple RPC APIs may implements a CRUD interface.
-
-    This class is a :class:`kitasato.tree.Tree` with predetermined items:
-        - :class:`kitasato.component.Index`
-        - :class:`kitasato.component.Create`
-        - :class:`kitasato.component.Read`
-        - :class:`kitasato.component.Update`
-        - :class:`kitasato.component.Delete`
-
-    Arguments:
-        endpoint (str): Endpoint prefix for this node
-        url (str): Url prefix for this node
-        name (str): Human readable name
-        show_in_menu (bool): If node should be in menu_tree
-
-    Attributes:
-        components: contains the components that will be initiated,
-                    they `parent` will be this node, may be overwriten to
-                    change components
-        show_in_menu (bool): True if node should be in menu_tree, default True
-        endpoint (str): Endpoint prefix for this node
-        url (str): Url prefix for this node
-        name (str): Human readable node name
-    """
-
-    components = (
-        component.Index,
-        component.Create,
-        component.Read,
-        component.Update,
-        component.Delete,
-    )
-
-    def __init__(self, endpoint=None, url=None, name=None, show_in_menu=None):
-        super().__init__(
-            endpoint=endpoint, url=url, name=name, show_in_menu=show_in_menu,
-            items=(component() for component in self.components),
-        )

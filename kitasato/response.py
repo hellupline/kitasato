@@ -5,7 +5,7 @@ from cached_property import cached_property
 from werkzeug import wrappers, exceptions
 
 
-class RequestDispatcher:
+class WSGIMixin:
     def __call__(self, environ, start_response):
         response = self.dispatch_request(wrappers.Request(environ))
         return response(environ, start_response)

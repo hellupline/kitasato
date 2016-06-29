@@ -6,10 +6,7 @@ from kitasato import tree, response
 NO_ENDPOINT_MSG = 'Endpoint not found.'
 
 
-class Application(response.RequestDispatcher, tree.Tree):
-    def __init__(self, name, items):
-        super().__init__(name=name, items=items)
-
+class Application(response.WSGIMixin, tree.Tree):
     @cached_property
     def url_map(self):
         return routing.Map([self.get_url_rules()])
@@ -31,7 +28,7 @@ class Application(response.RequestDispatcher, tree.Tree):
     def get_url_adapter(self, request):
         return self.url_map.bind_to_environ(request.environ)
 
-    def get_url_for_func(self, request):
+    def get_url_for(self, request):
         return self.get_url_adapter(request).build
 
     def serve_endpoint(self, request, endpoint, values):
