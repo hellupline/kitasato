@@ -1,19 +1,17 @@
-from cached_property import cached_property
-from werkzeug import routing, exceptions
-
-from kitasato import tree, response
-
-NO_ENDPOINT_MSG = 'Endpoint not found.'
+from werkzeug import routing, wrappers, exceptions
 
 
-class Application(response.WSGIMixin, tree.Tree):
-    @cached_property
-    def url_map(self):
-        return routing.Map([self.get_url_rules()])
+class Application:
+    def __init__(self, items):
+        self.endpoint_map = dict(
+            endpoint for item in items for endpoint in item.get_endpoints()
+        )
+        self.url_map = routing.Map(item.get_url_rules() for item in items)
+        self.items = list(items)
 
-    @cached_property
-    def endpoint_map(self):
-        return dict(self.get_endpoints())
+    def __call__(self, environ, start_response):  # pragma: no cover
+        response = self.dispatch_request(wrappers.Request(environ))
+        return response(environ, start_response)
 
     def dispatch_request(self, request):
         adapter = self.get_url_adapter(request)
@@ -33,7 +31,8 @@ class Application(response.WSGIMixin, tree.Tree):
 
     def serve_endpoint(self, request, endpoint, values):
         try:
-            handler = self.endpoint_map[endpoint]
+            handler_class = self.endpoint_map[endpoint]
         except KeyError:
-            raise exceptions.NotFound(NO_ENDPOINT_MSG)
-        return handler.dispatch_request(request, **values)
+            raise exceptions.NotFound('Endpoint not found.')
+        handler = handler_class(self, request)
+        return handler.entrypoint(**values)

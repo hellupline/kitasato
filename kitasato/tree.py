@@ -40,29 +40,31 @@ class Tree:
     Arguments:
         endpoint (str): Endpoint prefix for this node
         url (str): Url prefix for this node
-        name (str): Human readable name
         items (iterable[Tree]): Sequence of nodes
+        name (str): Human readable name
         show_in_menu (bool): If node should be in menu_tree
 
     Attributes:
-        show_in_menu (bool): True if node should be in menu_tree, default True
         endpoint (str): Endpoint prefix for this node
         url (str): Url prefix for this node
-        name (str): Human readable node name
         items (list): A list with children nodes
+        name (str): Human readable node name
+        show_in_menu (bool): Used in `as_menu_tree`, filters witch subtree
+            will be presented in the menu
+        parent (Tree): the registred parent with `register_items`
     """
-    parent = items = endpoint = url = name = None
-    show_in_menu = True
 
-    def __init__(self, endpoint=None, url=None, name=None, items=None,
-                 show_in_menu=None):
-        values = locals()
-        for attr in ('endpoint', 'url', 'name', 'show_in_menu'):
-            if values[attr] is not None:
-                setattr(self, attr, values[attr])
+    parent = None
+
+    def __init__(self, endpoint, url, items, name,
+                 show_in_menu=True):
+        self.endpoint = endpoint
+        self.url = url
         self.items = []
         if items is not None:
             self.register_items(items)
+        self.name = name
+        self.show_in_menu = show_in_menu
 
     def __repr__(self):
         templ = '<{cls_name} endpoint="{endpoint}" url="{url}" name="{name}">'
@@ -178,36 +180,30 @@ class Tree:
         }
 
 
-class EndpointHandler(Tree):
-    """EndpointHandler implements the response wrapper for the tree structure.
+class Leaf(Tree):
+    """Provide a entry in the tree for a EndpointHandler
 
-    Overwrite `dispatch_request` to return a `werkzeug.wrapper.Response`.
-
-    Here is a example:
-
-        >>> from werkzeug import wrappers
-        >>> from kitasato import tree
-        >>> class Document(tree.EndpointHandler):
-        ...     def dispatch_request(self, request, *args, **kwargs):
-        ...         return wrappers.Response('Hello World', status=200)
+    the porpouse of this class is to be a description ( endpoint name,
+    url, name, show in menu ) of the handler to the tree.
 
     Arguments:
         endpoint (str): Endpoint prefix for this node
         url (str): Url prefix for this node
+        handler (EndpointHandler): Sequence of nodes
         name (str): Human readable name
         show_in_menu (bool): If node should be in menu_tree
 
     Attributes:
-        show_in_menu (bool): True if node should be in menu_tree, default False
         endpoint (str): Endpoint prefix for this node
         url (str): Url prefix for this node
+        handler (EndpointHandler): the handler who will respond the request
         name (str): Human readable node name
-
-    Methods:
-        dispatch_request: Ovewrite this method to implement the response
-                          function
+        show_in_menu (bool): Used in `as_menu_tree`, filters witch subtree
+            will be presented in the menu
     """
-    show_in_menu = False
+    def __init__(self, endpoint, url, name, handler, show_in_menu=True):
+        super().__init__(endpoint=endpoint, url=url, name=name, items=[])
+        self.handler = handler
 
     def get_url_rules(self):
         """Build a Rule for this node.
@@ -223,7 +219,4 @@ class EndpointHandler(Tree):
         Returns:
             list (tuple): node endpoint (str) and the node
         """
-        return [(self.absolute_endpoint(), self)]
-
-    def dispatch_request(self):
-        raise NotImplementedError()
+        return [(self.absolute_endpoint(), self.handler)]

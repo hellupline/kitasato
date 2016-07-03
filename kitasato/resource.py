@@ -11,47 +11,52 @@ import operator as op
 from kitasato import tree, component
 
 
-class Resource(tree.Tree):  # pylint: disable=abstract-method
-    """Simple RPC APIs may implements a CRUD interface.
+DEFAULT_COMPONENTS = (
+    ('index', '/index', 'Index', True, component.Index),
+    ('create', '/create', 'Create', False, component.Create),
+    ('read', '/read/<key>', 'Read', False, component.Read),
+    ('update', '/update/<key>', 'Update', False, component.Update),
+    ('delete', '/delete/<key>', 'Delete', False, component.Delete),
+)
 
-    This class is a :class:`kitasato.tree.Tree` with predetermined items:
-        - :class:`kitasato.component.Index`
-        - :class:`kitasato.component.Create`
-        - :class:`kitasato.component.Read`
-        - :class:`kitasato.component.Update`
-        - :class:`kitasato.component.Delete`
+
+class Resource(tree.Tree):  # pylint: disable=abstract-method
+    """A RPC-like Tree Node
+
+    This class is a :class:`kitasato.tree.Tree` with predetermined leafs,
+    `kitasato.resource.DEFAULT_COMPONENTS`
 
     Arguments:
         controller (Controller): a controller to access storage methods,
                                  Controllers may use `ControllerMixin`
-                                 as a base
+                                 as a base class
         endpoint (str): Endpoint prefix for this node
         url (str): Url prefix for this node
         name (str): Human readable name
         show_in_menu (bool): If node should be in menu_tree
 
     Attributes:
-        components: contains the components that will be initiated,
-                    they `parent` will be this node, may be overwriten to
-                    change components
+        components: contains the handlers that will respond to the request,
+                    they `parent` will be this node.
+                    its should be a iterable of tuples in the format:
+                        (endpoint, url, name, show_in_menu, handler)
+                    the default value is `kitasato.resource.DEFAULT_COMPONENTS`
         show_in_menu (bool): True if node should be in menu_tree, default True
         endpoint (str): Endpoint prefix for this node
         url (str): Url prefix for this node
         name (str): Human readable node name
     """
 
-    components = (
-        component.Index,
-        component.Create,
-        component.Read,
-        component.Update,
-        component.Delete,
-    )
+    components = DEFAULT_COMPONENTS
 
     def __init__(self, controller, *args, **kwargs):
         super().__init__(*args, **kwargs, items=[
-            component(controller=controller)
-            for component in self.components
+            tree.Leaf(
+                endpoint=endpoint, url=url, handler=handler,
+                name=name, show_in_menu=show_in_menu,
+                # args={'controller': controller},
+            )
+            for endpoint, url, name, show_in_menu, handler in self.components
         ])
 
 
@@ -76,12 +81,13 @@ class ControllerMixin:
                             only if order_by is not None
         """
         items = self.fetch_items()
+        count = self.count_items(items)
         if filters is not None:
             items = self.filter_items(items, filters=filters)
         if order_by is not None:
             items = self.sort_items(items, order_by=order_by, reverse=reverse)
         items = self.slice_items(items, page=page)
-        return items, self.count_items(items)
+        return items, count
 
     def filter_items(self, items, filters):
         """Filter items based on filters in `filters` attribute.
@@ -93,12 +99,12 @@ class ControllerMixin:
         Returns:
             list: filtered list
         """
-        for filter_key, filter_value in filters:
+        for filter_key, filter_value in filters.items():
             try:
                 filter_func = self.filters[filter_key]
             except KeyError:
                 continue
-            filter_func(filter_value, items)
+            items = filter_func(filter_value, items)
         return items
 
     def sort_items(self, items, order_by, reverse=False):

@@ -1,67 +1,65 @@
 import json
 
-from cached_property import cached_property
-
 from werkzeug import wrappers, exceptions
 
+HTTP_METHODS = (
+    'GET', 'POST', 'HEAD', 'OPTIONS',
+    'DELETE', 'PUT', 'TRACE', 'PATCH',
+)
 
-class WSGIMixin:
-    def __call__(self, environ, start_response):
-        response = self.dispatch_request(wrappers.Request(environ))
-        return response(environ, start_response)
 
-    def dispatch_request(self, request):
+class EndpointHandler:
+    def __init__(self, application, request):
+        self.application = application
+        self.request = request
+
+    def entrypoint(self, *args, **kwargs):
         raise NotImplementedError()
 
 
-class RenderMixin:
-    """This class implements a `dispatch_request` and output renders.
-
-    This `dispatch_request` will:
-        - select a method based `request.method`, if method is missing
-        raise MethodNotAllowed
-        - select a render from `render` arg (default 'html'), if render
-        is missing, raise NotFound
-        - get the return of the method and pass to `self.context`
-        - pass the return of the `self.context` to render
-        - return the result of render
-    """
-
-    allowed_methods = {'GET': 'get', 'POST': 'post'}
-
-    def dispatch_request(self, request, *args, render='html', **kwargs):
-        """Renders the output of `get` or `post`,
-        pass it to self.make_context
-        and render using `render` and returns.
-
-        Raises:
-            MethodNotAllowed: if method not in `self.allowed_methods` or
-                              if class method not exists
-            NotFound: if render not in `self.renders`
-
-        Returns:
-            (Response): A Response object containing the response to request.
-        """
+class MethodHandler(EndpointHandler):
+    def entrypoint(self, *args, **kwargs):
+        allowed_methods = self.get_allowed_methods()
         try:
-            method = getattr(self, self.allowed_methods[request.method])
+            method_name = allowed_methods[self.request.method]
+            method = getattr(self, method_name)
         except (KeyError, AttributeError):
-            valid_methods = list(self.allowed_methods.keys())
+            valid_methods = list(allowed_methods.keys())
             raise exceptions.MethodNotAllowed(valid_methods)
+        return method(*args, **kwargs)
+
+    def get_allowed_methods(self):
+        return {
+            key: key.lower()
+            for key in HTTP_METHODS
+            if hasattr(self, key.lower())
+        }
+
+
+class RenderHandler(MethodHandler):
+    def __init__(self, application, request):
+        super().__init__(application, request)
+        self.renders = {
+            'html': self.render_html,
+            'json': self.render_json,
+        }
+
+    def entrypoint(self, *args, render='html', **kwargs):
         try:
             render = self.renders[render]
         except KeyError:
             message = 'Stream render "{}" not found.'.format(render)
             raise exceptions.NotFound(message)
-
-        body = method(request, *args, **kwargs)
-        context = self.make_context(request, body=body)
+        body = super().entrypoint(*args, **kwargs)
+        context = self.make_context(body=body)
         return wrappers.Response(render(context))
 
-    @cached_property
-    def renders(self):
+    def make_context(self, body=None):
+        url_for = self.application.get_url_for()
         return {
-            'html': self.render_html,
-            'json': self.render_json,
+            'request': self.request,
+            'url_for': url_for,
+            **(body or {}),
         }
 
     def render_html(self, context):
