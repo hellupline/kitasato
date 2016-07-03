@@ -2,12 +2,10 @@ from werkzeug import routing, wrappers, exceptions
 
 
 class Application:
-    def __init__(self, items):
-        self.endpoint_map = dict(
-            endpoint for item in items for endpoint in item.get_endpoints()
-        )
-        self.url_map = routing.Map(item.get_url_rules() for item in items)
-        self.items = list(items)
+    def __init__(self, tree):
+        self.url_map = routing.Map([tree.get_url_rules()])
+        self.endpoint_map = dict(tree.get_endpoints())
+        self.tree = tree
 
     def __call__(self, environ, start_response):  # pragma: no cover
         response = self.dispatch_request(wrappers.Request(environ))

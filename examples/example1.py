@@ -16,12 +16,10 @@ class RootHandler(EndpointHandler):
 
 
 def create_app():
-    return Application(items=[
-        Tree(endpoint='root', url='/', name='', items=[
-            Leaf(endpoint='index', url='/', name='', handler=RootHandler),
-            Resource(ControllerMixin(), endpoint='resource', url='/', name=''),
-        ])
-    ])
+    return Application(Tree(endpoint='', url='/', name='', items=[
+        Resource(ControllerMixin(), endpoint='resource', url='/', name=''),
+        Leaf(endpoint='index', url='/', name='', handler=RootHandler),
+    ]))
 
 
 if __name__ == '__main__':
