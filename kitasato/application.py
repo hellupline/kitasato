@@ -2,6 +2,20 @@ from werkzeug import routing, wrappers, exceptions
 
 
 class Application:
+    """Handle WSGI requests with :class:`Tree`
+
+    This class is a WSGI Application, will respond to urls on the `Tree`
+
+    Arguments:
+        tree (Tree): the tree with the urls and request handlers
+
+    Attributes:
+        url_map (Map): a `werkzeug.routing.Map` with the rules from
+                       `tree.get_url_rules()`
+        endpoint_map (dict): a endpoint -> handler mapping
+        tree (Tree): the tree used to create the `url_map` and `endpoint_map`
+
+    """
     def __init__(self, tree):
         self.url_map = routing.Map([tree.get_url_rules()])
         self.endpoint_map = dict(tree.get_endpoints())
@@ -12,6 +26,16 @@ class Application:
         return response(environ, start_response)
 
     def dispatch_request(self, request):
+        """Choose a `RequestHandler` to respond the request
+
+        Arguments:
+            request (werkzeug.wrappers.Request): werkzeug request wrapper
+
+        Returns:
+            the return value of the `RequestHandler.endpoint`,
+            it should be a valid WSGI application
+            eg: `werkzeug.wrappers.Response`
+        """
         adapter = self.get_url_adapter(request)
         try:
             endpoint, values = adapter.match()
