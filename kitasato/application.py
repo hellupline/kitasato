@@ -10,7 +10,7 @@ class Application:
     >>> class RequestHandler:
     ...     def __init__(self, application, request):
     ...         ...
-    ...     def entrypoint(self, *kwargs):
+    ...     def entrypoint(self, **kwargs):
     ...         ...
     ...         return wrappers.Response(html)
 
