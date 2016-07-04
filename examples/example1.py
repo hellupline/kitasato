@@ -15,12 +15,18 @@ class RootHandler(EndpointHandler):
         ]))
 
 
-def create_app():
-    return Application(Tree(endpoint='', url='/', name='', items=[
+def create_tree():
+    return Tree(endpoint='', url='/', name='', items=[
         Resource(ControllerMixin(), endpoint='resource', url='/', name=''),
         Leaf(endpoint='index', url='/', name='', handler=RootHandler),
-    ]))
+    ])
 
 
 if __name__ == '__main__':
-    serving.run_simple('0.0.0.0', 5000, create_app(), use_reloader=True)
+    serving.run_simple(
+        hostname='0.0.0.0',
+        port=5000,
+        application=Application(create_tree()),
+        use_reloader=True,
+        use_debugger=True,
+    )

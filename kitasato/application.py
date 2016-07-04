@@ -6,6 +6,14 @@ class Application:
 
     This class is a WSGI Application, will respond to urls on the `Tree`
 
+    handlers should have the following signature
+    >>> class RequestHandler:
+    ...     def __init__(self, application, request):
+    ...         ...
+    ...     def entrypoint(self, *kwargs):
+    ...         ...
+    ...         return wrappers.Response(html)
+
     Arguments:
         tree (Tree): the tree with the urls and request handlers
 
@@ -16,7 +24,7 @@ class Application:
         tree (Tree): the tree used to create the `url_map` and `endpoint_map`
 
     """
-    def __init__(self, tree):
+    def __init__(self, tree=None):
         self.url_map = routing.Map([tree.get_url_rules()])
         self.endpoint_map = dict(tree.get_endpoints())
         self.tree = tree
