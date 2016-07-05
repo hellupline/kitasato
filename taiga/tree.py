@@ -63,24 +63,6 @@ class Tree:
         """
         self.parent = parent
 
-    def get_root(self):
-        """Get root node.
-
-        Returns:
-            Tree: the root node of node
-        """
-        if self.is_root():
-            return self
-        return self.parent.get_root()
-
-    def is_root(self):
-        """Check if node is root node.
-
-        Returns:
-            bool: True if node is a root node
-        """
-        return self.parent is None
-
     def get_url_rules(self):
         """Build a ``werkzeug.routiung.Rule`` for this node.
 
@@ -122,7 +104,7 @@ class Tree:
         """Concat parent url with `self` url
 
         Returns:
-            str: the absolute url
+            str: The absolute url
         """
         try:
             base = self.parent.absolute_url()
@@ -136,7 +118,7 @@ class Tree:
         """Create a list with all nodes in a tree-like structure.
 
         Returns:
-            dict: the tree-like structure
+            dict: The tree-like structure
         """
         return {
             'endpoint': self.absolute_endpoint(),
@@ -163,7 +145,7 @@ class Leaf(Tree):
         show_in_menu (bool): If node should be in menu_tree
     """
     def __init__(self, endpoint, url, name, handler, show_in_menu=True):
-        super().__init__(endpoint=endpoint, url=url, name=name, items=[])
+        super().__init__(endpoint=endpoint, url=url, name=name, items=())
         self.handler = handler
 
     def get_url_rules(self):
@@ -175,9 +157,9 @@ class Leaf(Tree):
         return routing.Rule(self.url, endpoint=self.endpoint)
 
     def get_endpoints(self):
-        """Returns this node endpoint and the node itself.
+        """Returns this node endpoint and the handler.
 
         Returns:
-            list (tuple): node endpoint (str) and the node
+            list (tuple): Node endpoint (str) and the node
         """
         return [(self.absolute_endpoint(), self.handler)]

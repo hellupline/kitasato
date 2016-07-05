@@ -43,19 +43,6 @@ class TreeTest(unittest.TestCase):
             self.assertEqual(root, item.parent)
             self.assertIn(item, root.items)
 
-    def test_get_root(self):
-        level2 = self._create_node(2)
-        level1 = self._create_node(1, items=[level2])
-        root = self._create_node(items=[level1])
-        self.assertIs(level2.get_root(), root)
-
-    def test_is_root(self):
-        items = [self._create_node(i) for i in range(2)]
-        root = self._create_node(items=items)
-        for item in items:
-            self.assertFalse(item.is_root())
-        self.assertTrue(root.is_root())
-
     def test_get_url_rules(self):
         items = [self._create_node(i) for i in range(2)]
         root = self._create_node(items=items)
