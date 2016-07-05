@@ -1,7 +1,7 @@
 from math import ceil
 import jinja2
 
-from kitasato import RenderHandler
+from .response import RenderHandler
 
 
 class Component(RenderHandler):

@@ -3,11 +3,11 @@ from setuptools import setup
 
 setup(
     version='0.0.1alpha',
-    name='kitasato',
+    name='taiga',
     # long_description=long_description,
     # description=description,
-    download_url='https://github.com/hellupline/flask-manager/tarball/0.0.1',
-    url='https://github.com/hellupline/kitasato',
+    download_url='https://github.com/hellupline/taiga/tarball/0.0.1',
+    url='https://github.com/hellupline/taiga',
     author_email='hellupline@gmail.com',
     author='Renan Traba',
     keywords=['flask', 'sqlalchemy', 'crud', 'admin', 'manager'],
@@ -26,7 +26,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
 
-    packages=['kitasato'],
+    packages=['taiga'],
     install_requires=[
         'cached-property',
         'werkzeug',

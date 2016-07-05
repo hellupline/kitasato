@@ -1,5 +1,5 @@
 """
-    kitasato.resource
+    taiga.resource
     ~~~~~~~~~~~~~~~~~
 
     controller-like class to create RPC interface.
@@ -8,7 +8,7 @@
 """
 import operator as op
 
-from kitasato import tree, component
+from taiga import tree, component
 
 
 DEFAULT_COMPONENTS = (
@@ -23,8 +23,8 @@ DEFAULT_COMPONENTS = (
 class Resource(tree.Tree):  # pylint: disable=abstract-method
     """A RPC-like Tree Node
 
-    This class is a :class:`kitasato.tree.Tree` with predetermined leafs,
-    `kitasato.resource.DEFAULT_COMPONENTS`
+    This class is a :class:`taiga.tree.Tree` with predetermined leafs,
+    `taiga.resource.DEFAULT_COMPONENTS`
 
     Arguments:
         controller (Controller): a controller to access storage methods,
@@ -40,7 +40,7 @@ class Resource(tree.Tree):  # pylint: disable=abstract-method
                     they `parent` will be this node.
                     its should be a iterable of tuples in the format:
                         (endpoint, url, name, show_in_menu, handler)
-                    the default value is `kitasato.resource.DEFAULT_COMPONENTS`
+                    the default value is `taiga.resource.DEFAULT_COMPONENTS`
         show_in_menu (bool): True if node should be in menu_tree, default True
         endpoint (str): Endpoint prefix for this node
         url (str): Url prefix for this node

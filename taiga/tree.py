@@ -1,5 +1,5 @@
 """
-    kitasato.tree
+    taiga.tree
     ~~~~~~~~~~~~~
 
     Tree-like structure to create HTTP API.
@@ -8,7 +8,7 @@
     automated urls prefixes and endpoint prefixes.
 
     Example:
-        >>> from kitasato import application, tree, resource
+        >>> from taiga import application, tree, resource
         >>> from werkzeug import serving, wrappers
         >>> class RootDocument(tree.EndpointHandler):
         ...     def dispatch_request(self, request):
