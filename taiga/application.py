@@ -2,27 +2,20 @@ from werkzeug import routing, wrappers, exceptions
 
 
 class Application:
-    """Handle WSGI requests with :class:`Tree`
+    """Handle WSGI requests with ``Tree``.
 
-    This class is a WSGI Application, will respond to urls on the `Tree`
+    This class is a WSGI Application, it responds to requests using the
+    endpoint handlers from ``Tree``.
 
-    handlers should have the following signature
+    Handlers should have the following signature::
     >>> class RequestHandler:
     ...     def __init__(self, application, request):
     ...         ...
     ...     def entrypoint(self, **kwargs):
-    ...         ...
-    ...         return wrappers.Response(html)
+    ...         return wrappers.Response('Hello world.')
 
     Arguments:
         tree (Tree): the tree with the urls and request handlers
-
-    Attributes:
-        url_map (Map): a `werkzeug.routing.Map` with the rules from
-                       `tree.get_url_rules()`
-        endpoint_map (dict): a endpoint -> handler mapping
-        tree (Tree): the tree used to create the `url_map` and `endpoint_map`
-
     """
     def __init__(self, tree=None):
         self.url_map = routing.Map([tree.get_url_rules()])
@@ -34,15 +27,14 @@ class Application:
         return response(environ, start_response)
 
     def dispatch_request(self, request):
-        """Choose a `RequestHandler` to respond the request
+        """Choose a `RequestHandler` to respond the request.
 
         Arguments:
             request (werkzeug.wrappers.Request): werkzeug request wrapper
 
         Returns:
-            the return value of the `RequestHandler.endpoint`,
-            it should be a valid WSGI application
-            eg: `werkzeug.wrappers.Response`
+            The return value of the ``RequestHandler.endpoint``, it should be
+            a valid WSGI application like ``werkzeug.wrappers.Response``
         """
         adapter = self.get_url_adapter(request)
         try:

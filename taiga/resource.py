@@ -23,13 +23,12 @@ DEFAULT_COMPONENTS = (
 class Resource(tree.Tree):  # pylint: disable=abstract-method
     """A RPC-like Tree Node
 
-    This class is a :class:`taiga.tree.Tree` with predetermined leafs,
-    `taiga.resource.DEFAULT_COMPONENTS`
+    This class is a :class:``taiga.tree.Tree`` with predetermined leafs,
+    ``taiga.resource.DEFAULT_COMPONENTS``
 
     Arguments:
         controller (Controller): a controller to access storage methods,
-                                 Controllers may use `ControllerMixin`
-                                 as a base class
+            Controllers may use ``ControllerMixin`` as a base class
         endpoint (str): Endpoint prefix for this node
         url (str): Url prefix for this node
         name (str): Human readable name
@@ -37,14 +36,9 @@ class Resource(tree.Tree):  # pylint: disable=abstract-method
 
     Attributes:
         components: contains the handlers that will respond to the request,
-                    they `parent` will be this node.
-                    its should be a iterable of tuples in the format:
-                        (endpoint, url, name, show_in_menu, handler)
-                    the default value is `taiga.resource.DEFAULT_COMPONENTS`
-        show_in_menu (bool): True if node should be in menu_tree, default True
-        endpoint (str): Endpoint prefix for this node
-        url (str): Url prefix for this node
-        name (str): Human readable node name
+            they `parent` will be this node. its should be a iterable of
+            tuples in the format: (endpoint, url, name, show_in_menu, handler)
+            the default value is ``taiga.resource.DEFAULT_COMPONENTS``
     """
 
     components = DEFAULT_COMPONENTS
@@ -65,7 +59,7 @@ class ControllerMixin:
     filters = None
 
     def get_items(self, page=1, order_by=None, reverse=False, filters=None):
-        """Combines the methods:
+        """Combines the methods::
             - `fetch_items`
             - `filter_items`
             - `sort_items`
@@ -74,11 +68,9 @@ class ControllerMixin:
 
         Arguments:
             page (int): the page number
-            filters (sequence): a sequence of 2-items tuple of
-                            (filter_key, value)
+            filters (sequence): a sequence of 2-items tuple of (key, func)
             order_by (str): the field to order items by
-            reverse (bool): reverse the sort order,
-                            only if order_by is not None
+            reverse (bool): reverse the sort order
         """
         items = self.fetch_items()
         count = self.count_items(items)
@@ -94,10 +86,10 @@ class ControllerMixin:
 
         Arguments:
             items (sequence): the items returned from `fetch_items`
-            filters (sequence): a sequence of 2-items tuple of
-                                (filter_key, value)
+            filters (sequence): a sequence of 2-items tuple of (key, func)
+
         Returns:
-            list: filtered list
+            list: filtered items
         """
         for filter_key, filter_value in filters.items():
             try:
@@ -136,6 +128,9 @@ class ControllerMixin:
 
     def count_items(self, items):
         """Items size.
+
+        Arguments:
+            items (sequence): the items returned from `fetch_items`
 
         Returns:
             int: len of items

@@ -2,11 +2,24 @@ TODO
 ====
 
 
-Features
---------
-- url_for
+Docstrings
+----------
+* resourse.ControllerMixin
+* component
+* component.Component
+* component.Index
+* component.Create
+* component.Read
+* component.Update
+* component.Delete
+* response
+* response.EndpointHandler
+* response.MethodHandler
+* response.Renderhandler
 
 
-Code Base
----------
-- controller methods in resource
+Rethink
+-------
+* resource
+* component
+* response
