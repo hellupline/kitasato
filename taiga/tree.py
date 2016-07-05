@@ -6,28 +6,6 @@
 
     This module implements a simple tree-like structure to help create
     automated urls prefixes and endpoint prefixes.
-
-    Example:
-        >>> from taiga import application, tree, resource
-        >>> from werkzeug import serving, wrappers
-        >>> class RootDocument(tree.EndpointHandler):
-        ...     def dispatch_request(self, request):
-        ...         root = self.get_root()
-        ...         msg = ', '.join([
-        ...             pformat(root.endpoint_map),
-        ...             pformat(root.url_map),
-        ...             pformat(root.as_menu_tree()),
-        ...         ])
-        ...         return wrappers.Response(msg)
-        >>> def create_app():
-        ...     return application.Application(name='API', items=[
-        ...         tree.Tree(url='/v1', endpoint='api-v1', name='V1', items=[
-        ...             RootDocument(
-        ...                 url='/', endpoint='example', name='Example'),
-        ...         ]),
-        ...     ])
-        >>> if __name__ == '__main__':
-        ...     serving.run_simple('0.0.0.0', 5000, create_app())
 """
 from werkzeug import routing
 
