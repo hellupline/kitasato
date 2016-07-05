@@ -2,7 +2,7 @@ from pprint import pformat
 
 from werkzeug import serving, wrappers
 
-from kitasato import (
+from taiga import (
     Application, Tree, Leaf, EndpointHandler, Resource, ControllerMixin
 )
 
