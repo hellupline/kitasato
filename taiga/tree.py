@@ -21,15 +21,6 @@ class Tree:
         items (iterable[Tree]): Sequence of nodes
         name (str): Human readable name
         show_in_menu (bool): If node should be in menu_tree
-
-    Attributes:
-        endpoint (str): Endpoint prefix for this node
-        url (str): Url prefix for this node
-        items (list): A list with children nodes
-        name (str): Human readable node name
-        show_in_menu (bool): Used in `as_menu_tree`, filters witch subtree
-            will be presented in the menu
-        parent (Tree): the registred parent with `register_items`
     """
 
     parent = None
@@ -68,7 +59,7 @@ class Tree:
         """Set parent node.
 
         Arguments:
-            parent (Tree): Node to become parent of `self`
+            parent (Tree): Node to become parent of ``self``
         """
         self.parent = parent
 
@@ -91,7 +82,7 @@ class Tree:
         return self.parent is None
 
     def get_url_rules(self):
-        """Build a Rule for this node.
+        """Build a ``werkzeug.routiung.Rule`` for this node.
 
         Returns:
             werkzeug.routiung.Rule: A url Rule for this node
@@ -145,7 +136,7 @@ class Tree:
         """Create a list with all nodes in a tree-like structure.
 
         Returns:
-            list: the tree-like structure
+            dict: the tree-like structure
         """
         return {
             'endpoint': self.absolute_endpoint(),
@@ -159,10 +150,10 @@ class Tree:
 
 
 class Leaf(Tree):
-    """Provide a entry in the tree for a EndpointHandler
+    """Provide a entry in the tree for a ``EndpointHandler``
 
-    the porpouse of this class is to be a description ( endpoint name,
-    url, name, show in menu ) of the handler to the tree.
+    the porpouse of this class is to be a description of the handler
+    (endpoint name, url, name, show in menu).
 
     Arguments:
         endpoint (str): Endpoint prefix for this node
@@ -170,21 +161,13 @@ class Leaf(Tree):
         handler (EndpointHandler): Sequence of nodes
         name (str): Human readable name
         show_in_menu (bool): If node should be in menu_tree
-
-    Attributes:
-        endpoint (str): Endpoint prefix for this node
-        url (str): Url prefix for this node
-        handler (EndpointHandler): the handler who will respond the request
-        name (str): Human readable node name
-        show_in_menu (bool): Used in `as_menu_tree`, filters witch subtree
-            will be presented in the menu
     """
     def __init__(self, endpoint, url, name, handler, show_in_menu=True):
         super().__init__(endpoint=endpoint, url=url, name=name, items=[])
         self.handler = handler
 
     def get_url_rules(self):
-        """Build a Rule for this node.
+        """Build a ``werkzeug.routiung.Rule`` for this node.
 
         Returns:
             werkzeug.routiung.Rule: A url Rule for this node
