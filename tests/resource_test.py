@@ -51,6 +51,12 @@ class ControllerTest(unittest.TestCase):
         items = self.controller.filter_items(self.items, {'0': 'a', '1': 0})
         self.assertEqual(items, [('a', 0)])
 
+    def test_filter_items_other_params(self):
+        items = self.controller.filter_items(self.items, {
+            '0': 'a', '1': 0, '2': 1
+        })
+        self.assertEqual(items, [('a', 0)])
+
     def test_sort_items(self):
         sample = [
             ('a', 0), ('b', 0), ('c', 0), ('d', 0),

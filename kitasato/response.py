@@ -21,16 +21,15 @@ class MethodHandler(EndpointHandler):
     def entrypoint(self, *args, **kwargs):
         allowed_methods = self.get_allowed_methods()
         try:
-            method_name = allowed_methods[self.request.method]
-            method = getattr(self, method_name)
-        except (KeyError, AttributeError):
+            method = allowed_methods[self.request.method]
+        except KeyError:
             valid_methods = list(allowed_methods.keys())
             raise exceptions.MethodNotAllowed(valid_methods)
         return method(*args, **kwargs)
 
     def get_allowed_methods(self):
         return {
-            key: key.lower()
+            key: getattr(self, key.lower())
             for key in HTTP_METHODS
             if hasattr(self, key.lower())
         }
@@ -63,7 +62,7 @@ class RenderHandler(MethodHandler):
         }
 
     def render_html(self, context):
-        return self.template.render(**context)
+        return self.template.render(**context)  # pylint: disable=no-member
 
     def render_json(self, context):
         return json.dumps(context['data'], indent=4)

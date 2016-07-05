@@ -1,42 +1,37 @@
 import unittest
 
-from werkzeug import wrappers, exceptions, test as test_utils
-import jinja2
-
-from kitasato import response
+from werkzeug import exceptions, test as test_utils
+from kitasato import MethodHandler
 
 
-class App(response.RequestDispatcher):
-    def dispatch_request(self, request):
-        return wrappers.Response('ok')
+class Handler(MethodHandler):
+    def get(self):
+        return 'get'
+
+    def post(self):
+        return 'post'
 
 
-class Render(response.RenderMixin):
-    template = jinja2.Template('{{ data }}')
+class MethodHandlerTest(unittest.TestCase):
+    def setUp(self):
+        request = test_utils.EnvironBuilder().get_request()
+        self.handler = Handler(None, request)
 
-    def context(self, resquest):
-        return {'data': 'ok'}
+    def test_select_http_method_post(self):
+        request = test_utils.EnvironBuilder(method='POST')
+        value = Handler(None, request).entrypoint()
+        self.assertEqual(value, 'post')
 
+    def test_select_http_method_put(self):
+        request = test_utils.EnvironBuilder(method='PUT')
+        with self.assertRaises(exceptions.MethodNotAllowed):
+            value = Handler(None, request).entrypoint()
 
-class RequestDispacherTest(unittest.TestCase):
-    def test_call(self):
-        c = test_utils.Client(App())
-        closing, status, headers = c.get('/')
-        self.assertEqual(list(closing), [b'ok'])
+    def test_select_http_method_get(self):
+        value = self.handler.entrypoint()
+        self.assertEqual(value, 'get')
 
-
-class RenderMixinTest(unittest.TestCase):
-    def test_select_render_html(self):
-        request = test_utils.EnvironBuilder(path='/').get_request()
-        response_html = Render().dispatch_request(request, render='html')
-        self.assertEqual(response_html.response, [b'ok'])
-
-    def test_select_render_json(self):
-        request = test_utils.EnvironBuilder(path='/').get_request()
-        response_json = Render().dispatch_request(request, render='json')
-        self.assertEqual(response_json.response, [b'"ok"'])
-
-    def test_select_render_miss(self):
-        request = test_utils.EnvironBuilder(path='/').get_request()
-        with self.assertRaises(exceptions.NotFound):
-            Render().dispatch_request(request, render='fake')
+    def test_get_allowed_methods(self):
+        sample = {'GET': self.handler.get, 'POST': self.handler.post}
+        allowed_methods = self.handler.get_allowed_methods()
+        self.assertEqual(allowed_methods, sample)
