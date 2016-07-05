@@ -1,7 +1,7 @@
 import unittest
 
 from werkzeug import exceptions, test as test_utils
-from kitasato import MethodHandler
+from taiga import MethodHandler
 
 
 class Handler(MethodHandler):

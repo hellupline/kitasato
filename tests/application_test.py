@@ -2,7 +2,7 @@ import unittest
 
 from werkzeug import exceptions, wrappers, test as test_utils
 
-from kitasato import Application, Tree, Leaf, EndpointHandler
+from taiga import Application, Tree, Leaf, EndpointHandler
 
 
 class RootHandler(EndpointHandler):

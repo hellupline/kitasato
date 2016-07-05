@@ -1,6 +1,6 @@
 import unittest
 
-from kitasato import (
+from taiga import (
     Resource, Index, Create, Read, Update, Delete, ControllerMixin)
 
 

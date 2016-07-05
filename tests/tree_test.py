@@ -1,6 +1,6 @@
 import unittest
 
-from kitasato import Tree, Leaf
+from taiga import Tree, Leaf
 
 
 class TreeTest(unittest.TestCase):

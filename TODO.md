@@ -1,5 +1,5 @@
-TODO
-====
+TODO List
+=========
 
 
 Docstrings
@@ -23,3 +23,9 @@ Rethink
 * resource
 * component
 * response
+
+
+Tests
+-----
+* components
+* response.RenderHandler
