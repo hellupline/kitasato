@@ -26,7 +26,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
 
-    packages=['taiga'],
+    packages=['taiga', 'taiga.ext'],
     install_requires=[
         'cached-property',
         'werkzeug',

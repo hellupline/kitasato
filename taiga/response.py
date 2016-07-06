@@ -2,22 +2,37 @@ import json
 
 from werkzeug import wrappers, exceptions
 
-HTTP_METHODS = (
-    'GET', 'POST', 'HEAD', 'OPTIONS',
-    'DELETE', 'PUT', 'TRACE', 'PATCH',
-)
+HTTP_METHODS = {
+    method: 'http_{}'.format(method.lower())
+    for method in (
+        'GET', 'POST', 'HEAD', 'OPTIONS',
+        'DELETE', 'PUT', 'TRACE', 'PATCH',
+    )
+}
 
 
-class EndpointHandler:
+class RequestHandler:
     def __init__(self, application, request):
         self.application = application
+        self.tree = application.tree
         self.request = request
 
-    def entrypoint(self, *args, **kwargs):
+    def initialize(self, **kwargs):
+        pass
+
+    def entrypoint(self, **kwargs):
         raise NotImplementedError()
 
+    @classmethod
+    def as_function(cls, **kwargs):
+        def handler(application, request, **values):
+            f = cls(application, request)
+            f.initialize(**kwargs)
+            return f.entrypoint(**values)
+        return handler
 
-class MethodHandler(EndpointHandler):
+
+class MethodHandler(RequestHandler):
     def entrypoint(self, *args, **kwargs):
         allowed_methods = self.get_allowed_methods()
         try:
@@ -29,9 +44,9 @@ class MethodHandler(EndpointHandler):
 
     def get_allowed_methods(self):
         return {
-            key: getattr(self, key.lower())
-            for key in HTTP_METHODS
-            if hasattr(self, key.lower())
+            key: getattr(self, method_name)
+            for key, method_name in HTTP_METHODS.items()
+            if hasattr(self, method_name)
         }
 
 
@@ -54,15 +69,20 @@ class RenderHandler(MethodHandler):
         return wrappers.Response(render(context))
 
     def make_context(self, body=None):
-        url_for = self.application.get_url_for()
+        url_for = self.application.get_url_for(self.request)
+        menu = self.application.tree.as_menu_tree()
         return {
             'request': self.request,
             'url_for': url_for,
+            'menu': menu,
             **(body or {}),
         }
 
     def render_html(self, context):
-        return self.template.render(**context)  # pylint: disable=no-member
+        return self.get_template().render(**context)
+
+    def get_template(self):
+        raise NotImplementedError
 
     def render_json(self, context):
         return json.dumps(context['data'], indent=4)

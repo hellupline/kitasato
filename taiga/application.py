@@ -53,8 +53,7 @@ class Application:
 
     def serve_endpoint(self, request, endpoint, values):
         try:
-            handler_class = self.endpoint_map[endpoint]
+            handler = self.endpoint_map[endpoint]
         except KeyError:
             raise exceptions.NotFound('Endpoint not found.')
-        handler = handler_class(self, request)
-        return handler.entrypoint(**values)
+        return handler(self, request, **values)

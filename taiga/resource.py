@@ -1,26 +1,32 @@
 """
     taiga.resource
-    ~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~
 
     controller-like class to create RPC interface.
 
     This module implements a simple RPC interface to help create HTTP APIs.
 """
-import operator as op
-
-from taiga import tree, component
+from taiga.component import Index, Create, Read, Update, Delete, Action
+from taiga.tree import Tree, Leaf
 
 
 DEFAULT_COMPONENTS = (
-    ('index', '/index', 'Index', True, component.Index),
-    ('create', '/create', 'Create', False, component.Create),
-    ('read', '/read/<key>', 'Read', False, component.Read),
-    ('update', '/update/<key>', 'Update', False, component.Update),
-    ('delete', '/delete/<key>', 'Delete', False, component.Delete),
+    (Index, {'rule': Index.rule, 'name': 'Index',
+             'show_in_menu': Index.show_in_menu}),
+    (Create, {'rule': Create.rule, 'name': 'Create',
+              'show_in_menu': Create.show_in_menu}),
+    (Read, {'rule': Read.rule, 'name': 'Read',
+            'show_in_menu': Read.show_in_menu}),
+    (Update, {'rule': Update.rule, 'name': 'Update',
+              'show_in_menu': Update.show_in_menu}),
+    (Delete, {'rule': Delete.rule, 'name': 'Delete',
+              'show_in_menu': Delete.show_in_menu}),
+    (Action, {'rule': Action.rule, 'name': 'Action',
+              'show_in_menu': Action.show_in_menu}),
 )
 
 
-class Resource(tree.Tree):  # pylint: disable=abstract-method
+class Resource(Tree):  # pylint: disable=abstract-method
     """A RPC-like Tree Node
 
     This class is a :class:``taiga.tree.Tree`` with predetermined leafs,
@@ -29,125 +35,29 @@ class Resource(tree.Tree):  # pylint: disable=abstract-method
     Arguments:
         controller (Controller): a controller to access storage methods,
             Controllers may use ``ControllerMixin`` as a base class
-        endpoint (str): Endpoint prefix for this node
+        endpoint_key (str): Endpoint prefix for this node
         url (str): Url prefix for this node
         name (str): Human readable name
         show_in_menu (bool): If node should be in menu_tree
 
     Attributes:
         components: contains the handlers that will respond to the request,
-            they `parent` will be this node. its should be a iterable of
-            tuples in the format: (endpoint, url, name, show_in_menu, handler)
-            the default value is ``taiga.resource.DEFAULT_COMPONENTS``
+            they `parent` will be this node. Each entry should be a
+            kwargs style dict for the ``Leaf`` class.
+            The default value is ``taiga.resource.DEFAULT_COMPONENTS``
     """
 
     components = DEFAULT_COMPONENTS
 
-    def __init__(self, controller, *args, **kwargs):
-        super().__init__(*args, **kwargs, items=[
-            tree.Leaf(
-                endpoint=endpoint, url=url, handler=handler,
-                name=name, show_in_menu=show_in_menu,
-                # args={'controller': controller},
-            )
-            for endpoint, url, name, show_in_menu, handler in self.components
-        ])
-
-
-class ControllerMixin:
-    per_page = 50
-    filters = None
-
-    def get_items(self, page=1, order_by=None, reverse=False, filters=None):
-        """Combines the methods::
-            - `fetch_items`
-            - `filter_items`
-            - `sort_items`
-            - `slice_items`
-            - `count_items`
-
-        Arguments:
-            page (int): the page number
-            filters (sequence): a sequence of 2-items tuple of (key, func)
-            order_by (str): the field to order items by
-            reverse (bool): reverse the sort order
-        """
-        items = self.fetch_items()
-        count = self.count_items(items)
-        if filters is not None:
-            items = self.filter_items(items, filters=filters)
-        if order_by is not None:
-            items = self.sort_items(items, order_by=order_by, reverse=reverse)
-        items = self.slice_items(items, page=page)
-        return items, count
-
-    def filter_items(self, items, filters):
-        """Filter items based on filters in `filters` attribute.
-
-        Arguments:
-            items (sequence): the items returned from `fetch_items`
-            filters (sequence): a sequence of 2-items tuple of (key, func)
-
-        Returns:
-            list: filtered items
-        """
-        for filter_key, filter_value in filters.items():
-            try:
-                filter_func = self.filters[filter_key]
-            except KeyError:
-                continue
-            items = filter_func(filter_value, items)
-        return items
-
-    def sort_items(self, items, order_by, reverse=False):
-        """Sort items based on `order_by` key in items.
-
-        Arguments:
-            items (sequence): the items returned from `fetch_items`
-            order_by (str): the field to order items by
-            reverse (bool): reverse the sort order
-
-        Returns:
-            list: sorted items by `order_by`
-        """
-        return sorted(items, key=op.itemgetter(order_by), reverse=reverse)
-
-    def slice_items(self, items, page=1):
-        """Slice items in `per_page` items.
-
-        Arguments:
-            items (sequence): the items returned from `fetch_items`
-            page (int): the page number
-
-        Returns:
-            list: slice of items
-        """
-
-        start, end = self.per_page*(page-1), self.per_page*page
-        return items[start:end]
-
-    def count_items(self, items):
-        """Items size.
-
-        Arguments:
-            items (sequence): the items returned from `fetch_items`
-
-        Returns:
-            int: len of items
-        """
-        return len(items)
-
-    def fetch_items(self):
-        raise NotImplementedError
-
-    def get_item(self, pk):
-        raise NotImplementedError
-
-    def create_item(self, data):
-        raise NotImplementedError
-
-    def update_item(self, item, data):
-        raise NotImplementedError
-
-    def delete_item(self, item):
-        raise NotImplementedError
+    def __init__(self, controller, form,
+                 endpoint_key='resource', url='/',
+                 name='', show_in_menu=True):
+        handler_kwargs = {'controller': controller, 'form': form}
+        items = [
+            Leaf(handler.as_function(**handler_kwargs), **leaf_kwargs)
+            for handler, leaf_kwargs in self.components
+        ]
+        super().__init__(
+            items=items, endpoint_key=endpoint_key, url=url,
+            name=name, show_in_menu=show_in_menu,
+        )

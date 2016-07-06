@@ -1,6 +1,6 @@
 """
     taiga.tree
-    ~~~~~~~~~~~~~
+    ~~~~~~~~~~
 
     Tree-like structure to create HTTP API.
 
@@ -9,25 +9,25 @@
 """
 from werkzeug import routing
 
-ENDPOINT_SEP = ':'
+KEY_SEP = ':'
 
 
 class Tree:
     """Implements a parent-child relationship for urls.
 
     Arguments:
-        endpoint (str): Endpoint prefix for this node
-        url (str): Url prefix for this node
         items (iterable[Tree]): Sequence of nodes
+        endpoint_key (str): Endpoint prefix for this node
+        url (str): Url prefix for this node
         name (str): Human readable name
         show_in_menu (bool): If node should be in menu_tree
     """
 
     parent = None
 
-    def __init__(self, endpoint, url, items, name,
-                 show_in_menu=True):
-        self.endpoint = endpoint
+    def __init__(self, items=None, endpoint_key='', url='/',
+                 name='', show_in_menu=True):
+        self.endpoint_key = endpoint_key
         self.url = url
         self.items = []
         if items is not None:
@@ -36,10 +36,10 @@ class Tree:
         self.show_in_menu = show_in_menu
 
     def __repr__(self):
-        templ = '<{cls_name} endpoint="{endpoint}" url="{url}" name="{name}">'
-        return templ.format(
+        template = "<{cls_name} '{endpoint_key}' '{url}' '{name}'>"
+        return template.format(
             cls_name=self.__class__.__name__,
-            endpoint=self.absolute_endpoint(),
+            endpoint_key=self.absolute_endpoint_key(),
             url=self.absolute_url(),
             name=self.name,
         )
@@ -70,12 +70,11 @@ class Tree:
             werkzeug.routiung.Rule: A url Rule for this node
         """
         url_rules = [item.get_url_rules() for item in self.items]
+        submount = [routing.Submount(self.url, url_rules)]
         prefix = ''
-        if self.endpoint:
-            prefix = ''.join([self.endpoint, ENDPOINT_SEP])
-        if self.url:
-            url_rules = [routing.Submount(self.url, url_rules)]
-        return routing.EndpointPrefix(prefix, url_rules)
+        if self.endpoint_key:
+            prefix = ''.join([self.endpoint_key, KEY_SEP])
+        return routing.EndpointPrefix(prefix, submount)
 
     def get_endpoints(self):
         """Yields all endpoints under this node.
@@ -86,19 +85,19 @@ class Tree:
         for item in self.items:
             yield from item.get_endpoints()
 
-    def absolute_endpoint(self):
-        """Concat parent endpoint with `self` endpoint
+    def absolute_endpoint_key(self):
+        """Concat parent endpoint_key with `self` endpoint_key
 
         Returns:
-            str: the absolute endpoint
+            str: the absolute endpoint_key
         """
         try:
-            base = self.parent.absolute_endpoint()
+            base = self.parent.absolute_endpoint_key()
         except AttributeError:
-            return self.endpoint
+            return self.endpoint_key
         if not base:
-            return self.endpoint
-        return ENDPOINT_SEP.join([base, self.endpoint])
+            return self.endpoint_key
+        return KEY_SEP.join([base, self.endpoint_key])
 
     def absolute_url(self):
         """Concat parent url with `self` url
@@ -121,7 +120,7 @@ class Tree:
             dict: The tree-like structure
         """
         return {
-            'endpoint': self.absolute_endpoint(),
+            'endpoint_key': self.absolute_endpoint_key(),
             'name': self.name,
             'items': [
                 item.as_menu_tree()
@@ -138,15 +137,19 @@ class Leaf(Tree):
     (endpoint name, url, name, show in menu).
 
     Arguments:
-        endpoint (str): Endpoint prefix for this node
-        url (str): Url prefix for this node
-        handler (EndpointHandler): Sequence of nodes
-        name (str): Human readable name
-        show_in_menu (bool): If node should be in menu_tree
+        handler (RequestHandler): A RequestHandler.
+        rule (werkzeug.routiung.Rule): a url Rule.
+        name (str): Human readable name.
+        show_in_menu (bool): If node should be in menu_tree.
     """
-    def __init__(self, endpoint, url, name, handler, show_in_menu=True):
-        super().__init__(endpoint=endpoint, url=url, name=name, items=())
+    def __init__(self, handler, rule, name='', show_in_menu=True):
+        endpoint_key, url = rule.endpoint, rule.rule
+        super().__init__(
+            items=(), endpoint_key=endpoint_key, url=url,
+            name=name, show_in_menu=show_in_menu,
+        )
         self.handler = handler
+        self.rule = rule
 
     def get_url_rules(self):
         """Build a ``werkzeug.routiung.Rule`` for this node.
@@ -154,12 +157,13 @@ class Leaf(Tree):
         Returns:
             werkzeug.routiung.Rule: A url Rule for this node
         """
-        return routing.Rule(self.url, endpoint=self.endpoint)
+        return self.rule.empty()
 
     def get_endpoints(self):
         """Returns this node endpoint and the handler.
 
         Returns:
-            list (tuple): Node endpoint (str) and the node
+            list (tuple): a list with one tuple in the format::
+            (endpoint_key, (handler, handler_kwargs))
         """
-        return [(self.absolute_endpoint(), self.handler)]
+        return [(self.absolute_endpoint_key(), self.handler)]
